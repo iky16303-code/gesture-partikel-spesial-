@@ -346,4 +346,21 @@ try{
   hands.setOptions({maxNumHands:1, modelComplexity:0, minDetectionConfidence:.6, minTrackingConfidence:.6});
   hands.onResults(r=>{
     const l=r.multiHandLandmarks && r.multiHandLandmarks[0];
-   
+    if(!l){ handSeen=false; return; }
+    handSeen=true;
+    const n=fingers(l);
+    const m=(n>=1&&n<=3)?n:(n===0?4:0); if(m===cand){ if(++candN>=3) setMode(m); } else { cand=m; candN=0; }
+    tRotY = -(l[9].x-.5)*1.6;           // video di-mirror
+    tRotX = (l[9].y-.5)*.8;
+    const pinch=Math.hypot(l[4].x-l[8].x, l[4].y-l[8].y)/Math.hypot(l[0].x-l[9].x, l[0].y-l[9].y);
+    targetScale = Math.min(1.2, Math.max(.6, .6+pinch*.4));
+  });
+  window.startCam=()=>new Camera(video,{onFrame:async()=>{ await hands.send({image:video}); },width:480,height:360}).start()
+    .then(()=>{ st.innerHTML='Kamera aktif — tunjukkan tanganmu ✋'; })
+    .catch(()=>{ st.textContent='Kamera ditolak — pakai tombol 1–4'; video.style.display='none'; });
+}catch(e){
+  st.textContent='Hand tracking gagal dimuat — pakai tombol 1–4';
+}
+</script>
+</body>
+</html>
